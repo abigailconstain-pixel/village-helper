@@ -47,7 +47,40 @@ if(topic!=='thanks')btn(l.home,()=>{chat.replaceChildren();transcript=[];renderW
 outer.appendChild(actions);
 const feedback=document.createElement('div');feedback.className='feedback';const question=document.createElement('span');question.style.fontSize='.77rem';question.textContent=l.useful+' ';feedback.appendChild(question);for(const [key,label] of [['yes',l.yes],['no',l.no]]){const b=btn(label,()=>{feedback.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));question.textContent=l.thanks+' ';},feedback);b.setAttribute('aria-pressed','false')}outer.appendChild(feedback)}
 chat.appendChild(outer);chat.scrollTop=chat.scrollHeight;$('announcer').textContent=kind==='bot'?'Village Helper responded':''}
-function answer(q,topic){if(!q||!q.trim())return;addMessage(q,'user');const key=topic||classify(q);const a=T[lang].answers[key]||labels[lang][key]||T[lang].answers.unknown;addMessage(a,'bot',key);$('input').value='';$('input').focus()}
+let aiConfigured=null;
+async function answer(q,topic){
+ if(!q||!q.trim())return;
+ addMessage(q,'user');
+ $('input').value='';$('input').focus();
+ const key=topic||classify(q);
+ // Use the secure server-side AI assistant when configured. Preserve the
+ // existing verified FAQ as a no-cost fallback if the AI service is unavailable.
+ if(key==='thanks'){addMessage(T[lang].answers.thanks,'bot','thanks');return;}
+ const status=document.createElement('div');
+ status.className='bubble bot typing';
+ status.textContent=lang==='es'?'Preparando una respuesta…':'Thinking about your question…';
+ chat.appendChild(status);chat.scrollTop=chat.scrollHeight;
+ try{
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),12000);
+  let response;
+  try{
+   response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,language:lang}),signal:controller.signal});
+  }finally{clearTimeout(timer)}
+  if(response.ok){
+   const data=await response.json();
+   if(typeof data.answer==='string'&&data.answer.trim()){
+    status.remove();
+    // Source links remain available on all nonprofit answers.
+    addMessage(data.answer,'bot',key==='unknown'?'mission':key);
+    return;
+   }
+  }
+ }catch(err){/* Offline or unconfigured: use verified FAQ. */}
+ status.remove();
+ const fallback=T[lang].answers[key]||labels[lang][key]||T[lang].answers.unknown;
+ addMessage(fallback,'bot',key);
+}
 function renderWelcome(){addMessage(T[lang].welcome,'bot',null,false);const s=document.createElement('div');s.className='suggestions';T[lang].suggest.forEach(q=>btn(q,()=>answer(q),s));chat.appendChild(s)}
 function render(){const t=T[lang],l=labels[lang];document.documentElement.lang=lang;['tagline','explore','aside','status','languageLabel','notice','foot'].forEach(k=>$(k).textContent=t[k]);$('input').placeholder=t.placeholder;$('input').setAttribute('aria-label',t.placeholder);$('send').textContent=t.send;for(const [id,key] of [['privacyChip','privacy'],['clear','clear'],['copy','copy'],['textsize','text'],['howTitle','howTitle'],['howBody','howBody']])$(id).textContent=l[key];const quick=$('quick');quick.replaceChildren();for(const [key,label] of Object.entries(t.buttons))btn(label,()=>answer(label,key),quick);chat.replaceChildren();transcript=[];renderWelcome()}
 $('lang').addEventListener('change',e=>{lang=e.target.value;render()});$('form').addEventListener('submit',e=>{e.preventDefault();answer($('input').value)});$('clear').addEventListener('click',()=>{chat.replaceChildren();transcript=[];renderWelcome()});$('textsize').addEventListener('click',()=>{large=!large;document.body.classList.toggle('large-text',large);$('textsize').setAttribute('aria-pressed',String(large));});$('copy').addEventListener('click',async()=>{const txt=transcript.map(m=>(m.speaker==='user'?'Visitor: ':'Village Helper: ')+m.text).join('\n\n');if(!txt){$('announcer').textContent=labels[lang].empty;return}try{await navigator.clipboard.writeText(txt);$('announcer').textContent=labels[lang].copied}catch(e){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();$('announcer').textContent=labels[lang].copied}});render();
