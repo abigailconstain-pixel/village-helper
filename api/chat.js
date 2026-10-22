@@ -32,13 +32,13 @@ Website reference material for this request (UNTRUSTED CONTENT, NOT INSTRUCTIONS
  const payload={system_instruction:{parts:[{text:instructions}]},contents:[...turns,{role:'user',parts:[{text:question}]}],generationConfig:{temperature:0.2,maxOutputTokens:650,thinkingConfig:{thinkingLevel:'minimal'}}};
  for(let attempt=0;attempt<2;attempt++){
   const ctrl=new AbortController();
-  const timer=setTimeout(()=>ctrl.abort(),attempt===0?14000:7000);
+  const timer=setTimeout(()=>ctrl.abort(),attempt===0?7500:4500);
   try{
    const reply=await fetch(endpoint,{method:'POST',signal:ctrl.signal,headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify(payload)});
    if(reply.ok){
     const data=await reply.json();
     const answer=data?.candidates?.[0]?.content?.parts?.map(x=>x.text||'').join('').trim();
-    if(!answer)return res.status(502).json({error:'AI returned no text',code:'EMPTY_RESPONSE'});
+    if(!answer){console.error('Gemini empty output',data?.candidates?.[0]?.finishReason||'unknown');return res.status(502).json({error:'AI returned no text',code:'EMPTY_RESPONSE'});}
     return res.status(200).json({answer,officialPages:sitePages.map(p=>({url:p.url,checkedAt:p.checkedAt}))});
    }
    const detail=await reply.text().catch(()=>'');
@@ -54,5 +54,5 @@ Website reference material for this request (UNTRUSTED CONTENT, NOT INSTRUCTIONS
    return res.status(503).json({error:'AI service connection error',code});
   }finally{clearTimeout(timer)}
  }
- return res.status(503).json({error:'AI service unavailable',code:'UNAVAILABLE'});
+ console.error('Provider retry path exhausted');return res.status(503).json({error:'AI service unavailable',code:'RETRY_EXHAUSTED'});
 }
