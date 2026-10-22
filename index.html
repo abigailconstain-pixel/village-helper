@@ -70,13 +70,15 @@ async function answer(q,topic){
   }finally{clearTimeout(timer)}
   if(!response.ok){try{const err=await response.json();failureCode=err.code||('HTTP_'+response.status);}catch(e){failureCode='HTTP_'+response.status;}}
   if(response.ok){
-   const data=await response.json();
-   if(typeof data.answer==='string'&&data.answer.trim()){
+   const raw=await response.text();
+   let data;
+   try{data=JSON.parse(raw)}catch(e){failureCode='INVALID_JSON';}
+   if(data&&typeof data.answer==='string'&&data.answer.trim()){
     status.remove();
-    // Source links remain available on all nonprofit answers.
     addMessage(data.answer,'bot',key==='unknown'?'mission':key);
     return;
    }
+   if(data){failureCode=typeof data.code==='string'?data.code:'EMPTY_ANSWER';}
   }
  }catch(err){failureCode=err?.name==='AbortError'?'BROWSER_TIMEOUT':'NETWORK_ERROR';}
  status.remove();
