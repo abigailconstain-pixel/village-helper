@@ -33,12 +33,12 @@ function content(html){
  const merged=pieces.join(' | ');
  // If a Wix page renders content only inside div/span tags, use a limited fallback.
  const text=merged.length>140?merged:plain(html);
- return text.slice(0,4600);
+ return text.slice(0,2200);
 }
 async function readOne(k){
  const url=ROOT+PAGES[k],now=Date.now(),old=cache.get(k);
  if(old&&now-old.time<15*60*1000)return old.data;
- const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),3500);
+ const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),2500);
  try{
   const r=await fetch(url,{signal:ctrl.signal,headers:{Accept:'text/html','User-Agent':'VillageHelperStudentPrototype/1.0'}});
   if(!r.ok)throw Error('status '+r.status);
