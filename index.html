@@ -81,16 +81,21 @@ async function answer(q,topic){
  }catch(err){failureCode=err?.name==='AbortError'?'BROWSER_TIMEOUT':'NETWORK_ERROR';}
  status.remove();
  const drive=/food drive|donation drive|school drive|colecta de alimentos|campana de alimentos|recoleccion de alimentos/i.test(norm(q));
+ const reason=lang==='es'?'(Guía de respaldo: IA sin conexión; código '+failureCode+')':'(Backup answer: AI unavailable; code '+failureCode+')';
  if(drive){
+  const people=q.match(/\\b(\\d{1,3})\\s*(?:students|estudiantes|volunteers|voluntarios)\\b/i);
+  const weeks=q.match(/\\b(\\d{1,2})[- ]?(?:week|seman)/i);
+  const head=lang==='es'?'Plan de colecta escolar':'School food drive plan';
+  const count=people?people[1]:null;
+  const twoweeks=weeks&&Number(weeks[1])===2;
   const msg=lang==='es'
-   ?'Para organizar una colecta de alimentos en tu escuela: 1) Pide permiso a un profesor o responsable de la escuela. 2) Escribe a villagefreedge@gmail.com para confirmar qué alimentos aceptan y cómo entregarlos. 3) Crea una lista de productos aprobados y fija fechas y lugares de recolección. 4) Anuncia la colecta con carteles. 5) Cuenta y organiza las donaciones y acuerda su entrega con la organización. Este plan es una guía general, no una confirmación de la organización.'
-   :'To organize a school food drive: 1) Ask a teacher or school leader for permission. 2) Email villagefreedge@gmail.com to confirm current accepted items and drop-off plans. 3) Set collection dates and locations, and make a clear list of approved food items. 4) Promote the drive with posters or school announcements. 5) Sort and count donations, then coordinate delivery with the organization. This is general planning advice, not a confirmed arrangement with the nonprofit.';
+   ?head+(count?' para '+count+' estudiantes':'')+': 1) Pide autorización a un profesor. 2) Confirma por correo con villagefreedge@gmail.com los alimentos aceptados y cómo entregarlos. 3) Reparte responsabilidades (carteles, recolección, conteo y coordinación). '+(twoweeks?'Semana 1: anuncia la colecta y comienza a recoger donaciones. Semana 2: recuerda las fechas, cuenta, clasifica y coordina la entrega.':'Fija fechas para promocionar, recolectar, contar y entregar.')+' No es un acuerdo confirmado con la organización. '+reason
+   :head+(count?' for '+count+' students':'')+': 1) Get permission from a teacher. 2) Email villagefreedge@gmail.com to confirm accepted foods and drop-off details. 3) Split students into promotion, collection, sorting and coordination teams. '+(twoweeks?'Week 1: announce the drive and begin collecting. Week 2: send reminders, count and sort donations, and arrange handoff.':'Set clear dates to promote, collect, count and deliver donations.')+' This is general planning guidance, not an agreement with the nonprofit. '+reason;
   addMessage(msg,'bot','donate');
  } else {
   const fallback=T[lang].answers[key]||labels[lang][key]||T[lang].answers.unknown;
-  addMessage(fallback,'bot',key);
+  addMessage(fallback+'\\n\\n'+reason,'bot',key);
  }
- addMessage(lang==='es'?'Nota: La respuesta anterior es una guía de respaldo. La IA no está disponible (código: '+failureCode+'). Se está usando la guía de respaldo.':'Note: This answer comes from the backup guide. The live AI is currently unavailable (code: '+failureCode+'). The backup FAQ is being used; ask the project owner to check the AI setup.','bot',null,false);
 }
 function renderWelcome(){addMessage(T[lang].welcome,'bot',null,false);const s=document.createElement('div');s.className='suggestions';T[lang].suggest.forEach(q=>btn(q,()=>answer(q),s));chat.appendChild(s)}
 function render(){const t=T[lang],l=labels[lang];document.documentElement.lang=lang;['tagline','explore','aside','status','languageLabel','notice','foot'].forEach(k=>$(k).textContent=t[k]);$('input').placeholder=t.placeholder;$('input').setAttribute('aria-label',t.placeholder);$('send').textContent=t.send;for(const [id,key] of [['privacyChip','privacy'],['clear','clear'],['copy','copy'],['textsize','text'],['howTitle','howTitle'],['howBody','howBody']])$(id).textContent=l[key];const quick=$('quick');quick.replaceChildren();for(const [key,label] of Object.entries(t.buttons))btn(label,()=>answer(label,key),quick);chat.replaceChildren();transcript=[];renderWelcome()}
