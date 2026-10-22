@@ -76,7 +76,11 @@ async function answer(q,topic){
    try{data=JSON.parse(raw)}catch(e){failureCode='INVALID_JSON';}
    if(data&&typeof data.answer==='string'&&data.answer.trim()){
     status.remove();
-    addMessage(data.answer,'bot',key==='unknown'?null:key);
+    const checked=Array.isArray(data.officialPages)&&data.officialPages.length>0;
+    const timestamp=checked?new Date(data.officialPages[0].checkedAt):null;
+    const stamp=timestamp&&!Number.isNaN(timestamp.getTime())?timestamp.toLocaleString(lang==='es'?'es-US':'en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+    const note=checked?(lang==='es'?'\\n\\nFuentes oficiales consultadas: '+stamp+' (no confirma existencias ni horarios en vivo).':'\\n\\nOfficial pages checked: '+stamp+' (not live stock or schedule confirmation).'):'';
+    addMessage(data.answer+note,'bot',key==='unknown'?null:key);
     return;
    }
    if(data){failureCode=typeof data.code==='string'?data.code:'EMPTY_ANSWER';}
