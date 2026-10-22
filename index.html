@@ -60,11 +60,11 @@ async function answer(q,topic){
  status.className='bubble bot typing';
  status.textContent=lang==='es'?'Consultando la IA… puede tardar hasta 12 segundos.':'Checking AI… this may take up to 12 seconds.';
  chat.appendChild(status);chat.scrollTop=chat.scrollHeight;
+ let failureCode='UNAVAILABLE';
  try{
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),12000);
   let response;
-  let failureCode='UNAVAILABLE';
   try{
    response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,language:lang}),signal:controller.signal});
   }finally{clearTimeout(timer)}
