@@ -78,8 +78,17 @@ async function answer(q,topic){
   }
  }catch(err){/* Offline or unconfigured: use verified FAQ. */}
  status.remove();
- const fallback=T[lang].answers[key]||labels[lang][key]||T[lang].answers.unknown;
- addMessage(fallback,'bot',key);
+ const drive=/food drive|donation drive|school drive|colecta de alimentos|campana de alimentos|recoleccion de alimentos/i.test(norm(q));
+ if(drive){
+  const msg=lang==='es'
+   ?'Para organizar una colecta de alimentos en tu escuela: 1) Pide permiso a un profesor o responsable de la escuela. 2) Escribe a villagefreedge@gmail.com para confirmar qué alimentos aceptan y cómo entregarlos. 3) Crea una lista de productos aprobados y fija fechas y lugares de recolección. 4) Anuncia la colecta con carteles. 5) Cuenta y organiza las donaciones y acuerda su entrega con la organización. Este plan es una guía general, no una confirmación de la organización.'
+   :'To organize a school food drive: 1) Ask a teacher or school leader for permission. 2) Email villagefreedge@gmail.com to confirm current accepted items and drop-off plans. 3) Set collection dates and locations, and make a clear list of approved food items. 4) Promote the drive with posters or school announcements. 5) Sort and count donations, then coordinate delivery with the organization. This is general planning advice, not a confirmed arrangement with the nonprofit.';
+  addMessage(msg,'bot','donate');
+ } else {
+  const fallback=T[lang].answers[key]||labels[lang][key]||T[lang].answers.unknown;
+  addMessage(fallback,'bot',key);
+ }
+ addMessage(lang==='es'?'Nota: La respuesta anterior es una guía de respaldo. La IA no está disponible ahora. Revisa la configuración del servicio o vuelve a intentarlo.':'Note: This answer comes from the backup guide. The live AI is currently unavailable. Check the AI service configuration or try again later.','bot',null,false);
 }
 function renderWelcome(){addMessage(T[lang].welcome,'bot',null,false);const s=document.createElement('div');s.className='suggestions';T[lang].suggest.forEach(q=>btn(q,()=>answer(q),s));chat.appendChild(s)}
 function render(){const t=T[lang],l=labels[lang];document.documentElement.lang=lang;['tagline','explore','aside','status','languageLabel','notice','foot'].forEach(k=>$(k).textContent=t[k]);$('input').placeholder=t.placeholder;$('input').setAttribute('aria-label',t.placeholder);$('send').textContent=t.send;for(const [id,key] of [['privacyChip','privacy'],['clear','clear'],['copy','copy'],['textsize','text'],['howTitle','howTitle'],['howBody','howBody']])$(id).textContent=l[key];const quick=$('quick');quick.replaceChildren();for(const [key,label] of Object.entries(t.buttons))btn(label,()=>answer(label,key),quick);chat.replaceChildren();transcript=[];renderWelcome()}
