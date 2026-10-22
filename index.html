@@ -97,7 +97,16 @@ if(topic&&['food','volunteer','donate','locations','contact'].includes(topic)){
  status.remove();
  const drive=/food drive|donation drive|school drive|colecta de alimentos|campana de alimentos|recoleccion de alimentos/i.test(norm(q));
  const reason=lang==='es'?'(Guía de respaldo: IA sin conexión; código '+failureCode+')':'(Backup answer: AI unavailable; code '+failureCode+')';
- if(drive){
+ if(!drive&&key==='volunteer'&&/friend|amigo|saturday|sabado|sábado|weekend|fin de semana|group|grupo|together|juntos|juntas/i.test(norm(q))){
+  const matches=q.match(/\b(\d{1,2})\s*(?:friends?|amig[oa]s?|people|personas)\b/i);
+  const number=matches?Number(matches[1]):null;
+  const group=number?number+1:null;
+  const saturday=/saturday|sabado|sábado/i.test(norm(q));
+  const msg=lang==='es'
+    ?'Puedes organizar un grupo'+(group?' de '+group+' personas':'')+' para preguntar por oportunidades de voluntariado'+(saturday?' el sábado':'')+'. Primero, escribe a villagefreedge@gmail.com para confirmar si hay actividades, cupos y requisitos de edad. Después, pregunta qué tareas necesitan ayuda, dónde deben presentarse y si hay instrucciones especiales. Consulta también la página oficial de voluntariado. No hay una reserva confirmada para tu grupo.'
+    :'You can ask about volunteering'+(group?' as a group of '+group:' with your group')+(saturday?' this Saturday':'')+'. First, email villagefreedge@gmail.com to ask whether volunteer opportunities, group spaces, and age requirements allow your visit. Then confirm which tasks need help, the meeting location, and any instructions. Check the official volunteer page too. Your group is not booked or approved yet.';
+  addMessage(msg+'\n\n'+reason,'bot','volunteer');
+ } else if(drive){
   const people=q.match(/\b(\d{1,3})\s*(?:students|estudiantes|volunteers|voluntarios)\b/i);
   const weeks=q.match(/\b(\d{1,2})[- ]?(?:week|seman)/i);
   const head=lang==='es'?'Plan de colecta escolar':'School food drive plan';
