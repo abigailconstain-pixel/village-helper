@@ -59,12 +59,12 @@ async function answer(q,topic){
  if(key==='thanks'){addMessage(T[lang].answers.thanks,'bot','thanks');return;}
  const status=document.createElement('div');
  status.className='bubble bot typing';
- status.textContent=lang==='es'?'Consultando la IA… puede tardar hasta 12 segundos.':'Checking AI… this may take up to 12 seconds.';
+ status.textContent=lang==='es'?'Consultando la IA… en ocasiones tarda hasta 25 segundos.':'Checking AI… this can occasionally take up to 25 seconds.';
  chat.appendChild(status);chat.scrollTop=chat.scrollHeight;
  let failureCode='UNAVAILABLE';
  try{
   const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),12000);
+  const timer=setTimeout(()=>controller.abort(),25000);
   let response;
   try{
    response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,language:lang}),signal:controller.signal});
