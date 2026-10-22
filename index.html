@@ -21,6 +21,7 @@ const topicNames={en:{food:'Food assistance',volunteer:'Volunteering',donate:'Do
 const sourceFor={food:'food',volunteer:'volunteer',donate:'donate',locations:'locations',contact:'contact',mission:'food',unknown:'unknown',guideFood:'locations',guideVolunteer:'volunteer',guideDonate:'donate',guideLocations:'locations',guideContact:'contact'};
 function norm(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
 function classify(q){const s=norm(q);
+if(/food drive|donation drive|school drive|colecta de alimentos|campana de alimentos|recoleccion de alimentos|fundrais|colecta escolar/.test(s))return 'donate';
 if(/thank|gracias|thanks|muchas gracias/.test(s))return 'thanks';
 if(/today|tonight|right now|currently|available|availability|open now|opening hour|what time|hours|schedule|eligib|qualif|hoy|ahora|disponib|horario|abiert|requisit|calific|who can get|can i get|stock|inventor|hay comida|esta abierto|abren|abierto|open at|hours of operation/.test(s))return 'unknown';
 if(/where|nearest|closest|address|location|fridge|refrigerator|donde|ubicacion|direccion|nevera|refrigerador|cerca|mapa|find a fridge|find food near|how do i get there/.test(s))return 'locations';
@@ -75,7 +76,7 @@ async function answer(q,topic){
    try{data=JSON.parse(raw)}catch(e){failureCode='INVALID_JSON';}
    if(data&&typeof data.answer==='string'&&data.answer.trim()){
     status.remove();
-    addMessage(data.answer,'bot',key==='unknown'?'mission':key);
+    addMessage(data.answer,'bot',key==='unknown'?null:key);
     return;
    }
    if(data){failureCode=typeof data.code==='string'?data.code:'EMPTY_ANSWER';}
