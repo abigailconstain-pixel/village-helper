@@ -57,6 +57,8 @@ async function answer(q,topic){
  // Use the secure server-side AI assistant when configured. Preserve the
  // existing verified FAQ as a no-cost fallback if the AI service is unavailable.
  if(key==='thanks'){addMessage(T[lang].answers.thanks,'bot','thanks');return;}
+// Verified public contact information needs no slow AI call.
+if(key==='contact'&&/^(contact|✉️ contact|how do i contact them\??|contactar|contacto|¿cómo los contacto\??)$/i.test(q.trim())){addMessage(T[lang].answers.contact,'bot','contact');return;}
  const status=document.createElement('div');
  status.className='bubble bot typing';
  status.textContent=lang==='es'?'Consultando la IA… en ocasiones tarda hasta 25 segundos.':'Checking AI… this can occasionally take up to 25 seconds.';
