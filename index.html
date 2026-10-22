@@ -95,33 +95,18 @@ if(topic&&['food','volunteer','donate','locations','contact'].includes(topic)){
   }
  }catch(err){failureCode=err?.name==='AbortError'?'BROWSER_TIMEOUT':'NETWORK_ERROR';}
  status.remove();
- const drive=/food drive|donation drive|school drive|colecta de alimentos|campana de alimentos|recoleccion de alimentos/i.test(norm(q));
- const reason=lang==='es'?'(Guía de respaldo: IA sin conexión; código '+failureCode+')':'(Backup answer: AI unavailable; code '+failureCode+')';
- if(!drive&&/volunt|volunteer|help out|participar/i.test(norm(q))&&/friend|amigo|saturday|sabado|weekend|fin de semana|group|grupo|together|juntos|juntas/i.test(norm(q))){
-  const matches=q.match(/\b(\d{1,2})\s*(?:friends?|amig[oa]s?|people|personas)\b/i);
-  const number=matches?Number(matches[1]):null;
-  const group=number?number+1:null;
-  const saturday=/saturday|sabado|sábado/i.test(norm(q));
-  const msg=lang==='es'
-    ?'Puedes organizar un grupo'+(group?' de '+group+' personas':'')+' para preguntar por oportunidades de voluntariado'+(saturday?' el sábado':'')+'. Primero, escribe a villagefreedge@gmail.com para confirmar si hay actividades, cupos y requisitos de edad. Después, pregunta qué tareas necesitan ayuda, dónde deben presentarse y si hay instrucciones especiales. Consulta también la página oficial de voluntariado. No hay una reserva confirmada para tu grupo.'
-    :'You can ask about volunteering'+(group?' as a group of '+group:' with your group')+(saturday?' this Saturday':'')+'. First, email villagefreedge@gmail.com to ask whether volunteer opportunities, group spaces, and age requirements allow your visit. Then confirm which tasks need help, the meeting location, and any instructions. Check the official volunteer page too. Your group is not booked or approved yet.';
-  addMessage(msg+'\n\n'+reason,'bot','volunteer');
- } else if(drive){
-  const people=q.match(/\b(\d{1,3})\s*(?:students|estudiantes|volunteers|voluntarios)\b/i);
-  const weeks=q.match(/\b(\d{1,2})[- ]?(?:week|seman)/i);
-  const head=lang==='es'?'Plan de colecta escolar':'School food drive plan';
-  const count=people?people[1]:null;
-  const twoweeks=weeks&&Number(weeks[1])===2;
-  const msg=lang==='es'
-   ?head+(count?' para '+count+' estudiantes':'')+': 1) Pide autorización a un profesor. 2) Confirma por correo con villagefreedge@gmail.com los alimentos aceptados y cómo entregarlos. 3) Reparte responsabilidades (carteles, recolección, conteo y coordinación). '+(twoweeks?'Semana 1: anuncia la colecta y comienza a recoger donaciones. Semana 2: recuerda las fechas, cuenta, clasifica y coordina la entrega.':'Fija fechas para promocionar, recolectar, contar y entregar.')+' No es un acuerdo confirmado con la organización. '+reason
-   :head+(count?' for '+count+' students':'')+': 1) Get permission from a teacher. 2) Email villagefreedge@gmail.com to confirm accepted foods and drop-off details. 3) Split students into promotion, collection, sorting and coordination teams. '+(twoweeks?'Week 1: announce the drive and begin collecting. Week 2: send reminders, count and sort donations, and arrange handoff.':'Set clear dates to promote, collect, count and deliver donations.')+' This is general planning guidance, not an agreement with the nonprofit. '+reason;
-  addMessage(msg,'bot','donate');
- } else {
-  const fallback=T[lang].answers[key]||labels[lang][key]||T[lang].answers.unknown;
-  addMessage(fallback+'\n\n'+reason,'bot',key);
- }
+ // Never pass canned FAQ text off as the answer to a custom question.
+ // Quick-action buttons above still provide immediate vetted FAQ responses.
+ const errorMessage=lang==='es'
+  ?'No pude generar una respuesta personalizada en este momento. Tu pregunta sí se recibió, pero el servicio de IA no respondió. Código: '+failureCode+'. Puedes intentarlo otra vez o consultar la fuente oficial.'
+  :'I couldn’t generate a personalized answer right now. I received your question, but the AI service did not respond. Code: '+failureCode+'. You can retry or check the official source.';
+ addMessage(errorMessage,'bot',null);
+ const retry=document.createElement('div');
+ retry.className='suggestions';
+ btn(lang==='es'?'↻ Reintentar respuesta con IA':'↻ Retry AI answer',()=>{retry.remove();answer(q,topic)},retry);
+ chat.appendChild(retry);chat.scrollTop=chat.scrollHeight;
 }
 function renderWelcome(){addMessage(T[lang].welcome,'bot',null,false);const s=document.createElement('div');s.className='suggestions';T[lang].suggest.forEach(q=>btn(q,()=>answer(q),s));chat.appendChild(s)}
-function render(){const t=T[lang],l=labels[lang];document.documentElement.lang=lang;['tagline','explore','aside','status','languageLabel','notice','foot'].forEach(k=>$(k).textContent=t[k]);$('input').placeholder=t.placeholder;$('input').setAttribute('aria-label',t.placeholder);$('send').textContent=t.send;for(const [id,key] of [['privacyChip','privacy'],['clear','clear'],['copy','copy'],['textsize','text'],['howTitle','howTitle'],['howBody','howBody']])$(id).textContent=l[key];const quick=$('quick');quick.replaceChildren();for(const [key,label] of Object.entries(t.buttons))btn(label,()=>answer(label,key),quick);chat.replaceChildren();transcript=[];renderWelcome();$('foot').textContent=t.foot+' · Version 22 Oct B'}
+function render(){const t=T[lang],l=labels[lang];document.documentElement.lang=lang;['tagline','explore','aside','status','languageLabel','notice','foot'].forEach(k=>$(k).textContent=t[k]);$('input').placeholder=t.placeholder;$('input').setAttribute('aria-label',t.placeholder);$('send').textContent=t.send;for(const [id,key] of [['privacyChip','privacy'],['clear','clear'],['copy','copy'],['textsize','text'],['howTitle','howTitle'],['howBody','howBody']])$(id).textContent=l[key];const quick=$('quick');quick.replaceChildren();for(const [key,label] of Object.entries(t.buttons))btn(label,()=>answer(label,key),quick);chat.replaceChildren();transcript=[];renderWelcome();$('foot').textContent=t.foot+' · Version 22 Oct C'}
 $('lang').addEventListener('change',e=>{lang=e.target.value;render()});$('form').addEventListener('submit',e=>{e.preventDefault();answer($('input').value)});$('clear').addEventListener('click',()=>{chat.replaceChildren();transcript=[];renderWelcome()});$('textsize').addEventListener('click',()=>{large=!large;document.body.classList.toggle('large-text',large);$('textsize').setAttribute('aria-pressed',String(large));});$('copy').addEventListener('click',async()=>{const txt=transcript.map(m=>(m.speaker==='user'?'Visitor: ':'Village Helper: ')+m.text).join('\n\n');if(!txt){$('announcer').textContent=labels[lang].empty;return}try{await navigator.clipboard.writeText(txt);$('announcer').textContent=labels[lang].copied}catch(e){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();$('announcer').textContent=labels[lang].copied}});render();
 </script></body></html>
